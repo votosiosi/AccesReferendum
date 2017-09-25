@@ -9,23 +9,25 @@ import Subheader from 'material-ui/Subheader'
 
 
 const gateways = [
+    'https://gateway.ipfs.io/:hash',
+    'https://catalunya.network/:hash',
+    'https://ipfs.jes.xxx/:hash',
     'https://ipfs.io/:hash',
+    'https://hardbin.com/:hash',
+    'https://siderus.io/:hash',
+    //'https://eternum.io/:hash', //Cors policy doesn't allow to check. It probably works
     'https://gateway.ipfs.io/:hash',
     'https://ipfs.infura.io/:hash',
-    'http://rx14.co.uk/:hash',
-    'https://xmine128.tk/:hash',
-    'https://upload.global/:hash',
-    'https://ipfs.jes.xxx/:hash',
-    'https://example.com/:hash',
-    'https://catalunya.network/:hash',
-    'https://siderus.io/:hash',
-    'https://eternum.io/:hash',
-    'https://hardbin.com/:hash'
 ]
+
+const titleText = "Referèndum 2017"
+const descriptionText = ""
+const unavailableText = "unavailable"
+
+const availableText = "Accessible"
 const total = gateways.length
-const referendumHash = 'ipns/QmZxWEBJBVkGDGaKdYPQUXX4KC5TCWbvuR4iYZrTML8XCR'
 const hashToTest = 'Qmaisz6NMhDB51cCvNWa1GMS7LU1pAxdF4Ld6Ft9kZEP2a'
-const hashString = 'Hello from IPFS Gateway Checker'
+const textToFind = '</script><title>Inici - Referèndum 2017</title>'
 class App extends Component {
 
     constructor()
@@ -33,52 +35,50 @@ class App extends Component {
         super()
 
         this.state={
-            censoredLinks:[],
-            availableLink:" "
+            unavailableLinks:[],
+            availableLink:" ",
+            hash: "ipfs/Qmaisz6NMhDB51cCvNWa1GMS7LU1pAxdF4Ld6Ft9kZEP2a/",
+            titleText : "I just return a public ipfs gateway",
+            descriptionText : "",
+            unavailableText : "Unavailable",
+            availableText : "Available",
+            textToFind:"Hello from IPFS Gateway Checker"
         }
         let checked = 0
         let found = false
         gateways.forEach((gateway) => {
-            const gatewayAndHash = gateway.replace(':hash', referendumHash)
+            const gatewayAndHash = gateway.replace(':hash', this.state.hash)
             fetch(gatewayAndHash)
                 .then(res => res.text())
                 .then((text) => {
                     if(found)
                         return
+
                     
-                    console.warn(text.trim(), hashString.trim())
-
-                    const matched = text.trim() === hashString.trim()
-
-                    console.log(text.trim(), hashString.trim())
+                    console.warn(gateway,text)
+                    const matched = (text.indexOf(textToFind) !== -1) //This is not perfect. Just wants to be an extra check against 404 page
                     this.setState({
                         availableLink:gatewayAndHash
                     })
                    found = true
 
                 }).catch((err) => {
-
-                    console.warn(err)
-                    this.addCensoredLink(gatewayAndHash)
-
-                   
+                    this.addCensoredLink(gatewayAndHash)       
                 })
         })
     }
 
-    addCensoredLink=(url,censored=true)=>
+    componentWillMount=()=>
     {
-        let censoredLinks = this.state.censoredLinks
-        censoredLinks.push(this.getCensoredItem(url,censored))
-        this.setState({
-            censoredLinks:censoredLinks
-        })
+
     }
 
-    setAvailableLink(url)
+    addCensoredLink=(url, censored=true)=>
     {
+        let unavailableLinks = this.state.unavailableLinks
+        unavailableLinks.push(this.getCensoredItem(url,censored))
         this.setState({
-            censoredLinks:url
+            unavailableLinks:unavailableLinks
         })
     }
 
@@ -89,15 +89,17 @@ class App extends Component {
             window.location.href = url
         }
 
-        return(<h2 onClick = {onClick}> {url} </h2>)
+        return(<h3
+                    onClick = {onClick}
+                    style = {{color:'#8BC34A', margin:15}}>
+                    {url}
+                </h3>
+                )
     }
 
-    getCensoredItem=(url, censored)=>
+    getCensoredItem=(url, unavailable)=>
     {
         let secondaryText = ""
-
-        if(censored)
-            secondaryText = "Censored"
 
         function onClick()
         {
@@ -106,31 +108,36 @@ class App extends Component {
 
         return(
             <ListItem
-                rightIcon={<CensoredIcon />}
+                style = {{color:'light-grey'}}
+                leftIcon={<CensoredIcon />}
                 primaryText={url}
-                secondaryText={secondaryText}
+                secondaryText={this.state.unavailableText}
                 onClick = {onClick}
                 key={url}
                 />)    
-        
     }
-
 
       render() {
 
         let availableLink =  this.getAvailableItem(this.state.availableLink)
-
         return (
 
             <div>
                 <MuiThemeProvider>
-                <div>
+                <div style = {{margin:25}}>
+                    <h2> {this.state.titleText} </h2>
+
+                    <Subheader inset={false}>{this.state.availableText}</Subheader>
+                    
+                    {availableLink}
+
+                    <Subheader inset={false}>{this.state.unavailableText}</Subheader>
+
                     <List>
-                        <Subheader inset={true}>Censored links</Subheader>
-                       {this.state.censoredLinks}
+                       {this.state.unavailableLinks}
                     </List>
         
-                    {availableLink}
+
                 </div>
                 </MuiThemeProvider>
             </div>
