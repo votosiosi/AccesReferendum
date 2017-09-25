@@ -94,32 +94,32 @@ class App extends Component {
         if(params.hash)
             newState.hash= params.hash
         else
-            newState.hash = "ipfs/Qmaisz6NMhDB51cCvNWa1GMS7LU1pAxdF4Ld6Ft9kZEP2a/"
+            newState.hash = "ipns/QmZxWEBJBVkGDGaKdYPQUXX4KC5TCWbvuR4iYZrTML8XCR/"
 
         if(params.titleText)
             newState.titleText= params.titleText
         else
-            newState.titleText = "I just return a public ipfs gateway"
+            newState.titleText = "Accés a la web del Referèndum 2017"
 
         if(params.textToFind)
             newState.textToFind= params.textToFind
         else
-            newState.textToFind = "Hello from IPFS Gateway Checker"
+            newState.textToFind = "Referèndum"
 
         if(params.unavailableText)
             newState.unavailableText= params.unavailableText
         else
-            newState.unavailableText = "Unavailable"
+            newState.unavailableText = "No disponible"
 
         if(params.availableText)
             newState.availableText= params.availableText
         else
-            newState.availableText = "Available"
+            newState.availableText = "Accés disponible!"
 
         if(params.searchText)
             newState.searchText= params.searchText
         else
-            newState.searchText = "Checking..."
+            newState.searchText = "Buscan accessos no censorats"
 
 
         return newState
