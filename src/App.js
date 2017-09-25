@@ -6,7 +6,7 @@ import {List, ListItem} from 'material-ui/List'
 import CensoredIcon from 'material-ui/svg-icons/av/not-interested'
 import AvailableIcon from 'material-ui/svg-icons/navigation/check'
 import Subheader from 'material-ui/Subheader'
-
+import QueryString from 'query-string'
 
 const gateways = [
     'https://gateway.ipfs.io/:hash',
@@ -34,7 +34,12 @@ class App extends Component {
     {
         super()
 
-        this.state={
+        this.state = {}
+        let parsedHash = QueryString.parse(window.location.hash)
+        this.state=this.getParams(parsedHash)
+        this.state.unavailableLinks = []
+        this.state.availableLink = []
+        /*this.state={
             unavailableLinks:[],
             availableLink:" ",
             hash: "ipfs/Qmaisz6NMhDB51cCvNWa1GMS7LU1pAxdF4Ld6Ft9kZEP2a/",
@@ -43,20 +48,32 @@ class App extends Component {
             unavailableText : "Unavailable",
             availableText : "Available",
             textToFind:"Hello from IPFS Gateway Checker"
-        }
-        let checked = 0
+        }*/
+
+       // let parsedHash = QueryString.parse(window.location.hash)
+
+        //this.getParams(parsedHash)
+        
+    }
+
+    componentWillMount=()=>
+    {
+        
+        this.iterate()
+    }
+
+    iterate=()=>
+    {
         let found = false
         gateways.forEach((gateway) => {
-            const gatewayAndHash = gateway.replace(':hash', this.state.hash)
+            let gatewayAndHash = gateway.replace(':hash', this.state.hash)
             fetch(gatewayAndHash)
                 .then(res => res.text())
                 .then((text) => {
                     if(found)
                         return
 
-                    
-                    console.warn(gateway,text)
-                    const matched = (text.indexOf(textToFind) !== -1) //This is not perfect. Just wants to be an extra check against 404 page
+                    let matched = (text.indexOf(textToFind) !== -1) //This is not perfect. Just wants to be an extra check against 404 page
                     this.setState({
                         availableLink:gatewayAndHash
                     })
@@ -68,8 +85,43 @@ class App extends Component {
         })
     }
 
-    componentWillMount=()=>
+    getParams=(params)=>
     {
+        let page = QueryString.stringify(params)
+
+        let newState = {}
+
+        if(params.showUnavailable)
+            newState.showUnavailable = params.showUnavailable
+        else
+            newState.showUnavailable = false
+
+        if(params.hash)
+            newState.hash= params.hash
+        else
+            newState.hash = "ipfs/Qmaisz6NMhDB51cCvNWa1GMS7LU1pAxdF4Ld6Ft9kZEP2a/"
+
+        if(params.titleText)
+            newState.titleText= params.titleText
+        else
+            newState.titleText = "I just return a public ipfs gateway"
+
+        if(params.textToFind)
+            newState.textToFind= params.textToFind
+        else
+            newState.textToFind = "</script><title>Inici - Referèndum 2017</title>"
+
+        if(params.unavailableText)
+            newState.unavailableText= params.unavailableText
+        else
+            newState.unavailableText = "Unavailable"
+
+        if(params.availableText)
+            newState.availableText= params.availableText
+        else
+            newState.availableText = "Available"
+
+        return newState
 
     }
 
@@ -117,6 +169,24 @@ class App extends Component {
                 />)    
     }
 
+    getUnavailable=()=>
+    {
+        let div = <div/>
+
+        if(!this.state.showUnavailable)
+            return div
+
+        else return(
+            <div>
+                 <Subheader inset={false}>{this.state.unavailableText}</Subheader>
+
+                 <List>
+                    {this.state.unavailableLinks}
+                 </List>
+            </div>
+        )
+    }
+
       render() {
 
         let availableLink =  this.getAvailableItem(this.state.availableLink)
@@ -131,11 +201,9 @@ class App extends Component {
                     
                     {availableLink}
 
-                    <Subheader inset={false}>{this.state.unavailableText}</Subheader>
 
-                    <List>
-                       {this.state.unavailableLinks}
-                    </List>
+                    {this.getUnavailable()}
+                    
         
 
                 </div>
