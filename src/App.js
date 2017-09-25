@@ -1,21 +1,26 @@
-import React, { Component } from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { Component } from 'react'
+import logo from './logo.svg'
+import './App.css'
+import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider'
+import {List, ListItem} from 'material-ui/List'
+import CensoredIcon from 'material-ui/svg-icons/av/not-interested'
+import AvailableIcon from 'material-ui/svg-icons/navigation/check'
+import Subheader from 'material-ui/Subheader'
 
 
 const gateways = [
-    'https://ipfs.io/ipfs/:hash',
-    'https://gateway.ipfs.io/ipfs/:hash',
-    'https://ipfs.infura.io/ipfs/:hash',
-    'http://rx14.co.uk/ipfs/:hash',
-    'https://xmine128.tk/ipfs/:hash',
-    'https://upload.global/ipfs/:hash',
-    'https://ipfs.jes.xxx/ipfs/:hash',
-    'https://example.com/ipfs/:hash',
-    'https://catalunya.network/ipfs/:hash',
-    'https://siderus.io/ipfs/:hash',
-    'https://eternum.io/ipfs/:hash',
-    'https://hardbin.com/ipfs/:hash'
+    'https://ipfs.io/:hash',
+    'https://gateway.ipfs.io/:hash',
+    'https://ipfs.infura.io/:hash',
+    'http://rx14.co.uk/:hash',
+    'https://xmine128.tk/:hash',
+    'https://upload.global/:hash',
+    'https://ipfs.jes.xxx/:hash',
+    'https://example.com/:hash',
+    'https://catalunya.network/:hash',
+    'https://siderus.io/:hash',
+    'https://eternum.io/:hash',
+    'https://hardbin.com/:hash'
 ]
 const total = gateways.length
 const referendumHash = 'ipns/QmZxWEBJBVkGDGaKdYPQUXX4KC5TCWbvuR4iYZrTML8XCR'
@@ -26,57 +31,111 @@ class App extends Component {
     constructor()
     {
         super()
+
+        this.state={
+            censoredLinks:[],
+            availableLink:" "
+        }
         let checked = 0
+        let found = false
         gateways.forEach((gateway) => {
-            const gatewayAndHash = gateway.replace(':hash', hashToTest)
+            const gatewayAndHash = gateway.replace(':hash', referendumHash)
             fetch(gatewayAndHash)
                 .then(res => res.text())
                 .then((text) => {
+                    if(found)
+                        return
+                    
+                    console.warn(text.trim(), hashString.trim())
+
                     const matched = text.trim() === hashString.trim()
-                    this.addNode(gatewayAndHash, matched, matched ? 'All good' : 'Output did not match expected output')
-                    checked++
-                    this.updateStats(total, checked)
+
+                    console.log(text.trim(), hashString.trim())
+                    this.setState({
+                        availableLink:gatewayAndHash
+                    })
+                   found = true
+
                 }).catch((err) => {
-                    window.err = err
-                    this.addNode(gatewayAndHash, false, err)
-                    checked++
-                    this.updateStats(total, checked)
+
+                    console.warn(err)
+                    this.addCensoredLink(gatewayAndHash)
+
+                   
                 })
         })
     }
 
-    addNode = (gateway, online, title)=> {
-        const para = document.createElement('div')
-        let node
-        if (online) {
-            node = document.createElement('strong')
-            node.innerText = '✅ - Online - ' + gateway
-        } else {
-            node = document.createElement('div')
-            node.innerText = '❌ - Offline -  ' + gateway
-        }
-        node.setAttribute('title', title)
-        para.appendChild(node)
-        document.body.appendChild(para)
+    addCensoredLink=(url,censored=true)=>
+    {
+        let censoredLinks = this.state.censoredLinks
+        censoredLinks.push(this.getCensoredItem(url,censored))
+        this.setState({
+            censoredLinks:censoredLinks
+        })
     }
 
-    updateStats = (total, checked)=> {
-        document.getElementById('stats').innerText = checked + '/' + total + ' gateways checked'
+    setAvailableLink(url)
+    {
+        this.setState({
+            censoredLinks:url
+        })
     }
+
+    getAvailableItem(url)
+    {
+        function onClick()
+        {
+            window.location.href = url
+        }
+
+        return(<h2 onClick = {onClick}> {url} </h2>)
+    }
+
+    getCensoredItem=(url, censored)=>
+    {
+        let secondaryText = ""
+
+        if(censored)
+            secondaryText = "Censored"
+
+        function onClick()
+        {
+            window.location.href = url
+        }
+
+        return(
+            <ListItem
+                rightIcon={<CensoredIcon />}
+                primaryText={url}
+                secondaryText={secondaryText}
+                onClick = {onClick}
+                key={url}
+                />)    
+        
+    }
+
 
       render() {
+
+        let availableLink =  this.getAvailableItem(this.state.availableLink)
+
         return (
-          <div className="App">
-            <div className="App-header">
-              <img src={logo} className="App-logo" alt="logo" />
-              <h2>Welcome to React</h2>
+
+            <div>
+                <MuiThemeProvider>
+                <div>
+                    <List>
+                        <Subheader inset={true}>Censored links</Subheader>
+                       {this.state.censoredLinks}
+                    </List>
+        
+                    {availableLink}
+                </div>
+                </MuiThemeProvider>
             </div>
-            <p className="App-intro">
-              To get started, edit <code>src/App.js</code> and save to reload.
-            </p>
-          </div>
-        );
+        )
       }
     }
 
-export default App;
+export default App
