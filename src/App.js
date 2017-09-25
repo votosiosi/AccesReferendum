@@ -20,14 +20,6 @@ const gateways = [
     'https://ipfs.infura.io/:hash',
 ]
 
-const titleText = "Referèndum 2017"
-const descriptionText = ""
-const unavailableText = "unavailable"
-
-const availableText = "Accessible"
-const total = gateways.length
-const hashToTest = 'Qmaisz6NMhDB51cCvNWa1GMS7LU1pAxdF4Ld6Ft9kZEP2a'
-const textToFind = '</script><title>Inici - Referèndum 2017</title>'
 class App extends Component {
 
     constructor()
@@ -39,50 +31,53 @@ class App extends Component {
         this.state=this.getParams(parsedHash)
         this.state.unavailableLinks = []
         this.state.availableLink = []
-        /*this.state={
-            unavailableLinks:[],
-            availableLink:" ",
-            hash: "ipfs/Qmaisz6NMhDB51cCvNWa1GMS7LU1pAxdF4Ld6Ft9kZEP2a/",
-            titleText : "I just return a public ipfs gateway",
-            descriptionText : "",
-            unavailableText : "Unavailable",
-            availableText : "Available",
-            textToFind:"Hello from IPFS Gateway Checker"
-        }*/
-
-       // let parsedHash = QueryString.parse(window.location.hash)
-
-        //this.getParams(parsedHash)
-        
+        this.state.runOut=false
+        this.state.found=false
     }
 
     componentWillMount=()=>
     {
-        
-        this.iterate()
+        this.iterate(0)
     }
 
-    iterate=()=>
+    iterate=(index)=>
     {
+        if(index>=gateways.length)
+        {
+            this.setState(
+            {
+                runOut:true 
+            })
+            return
+        }
         let found = false
-        gateways.forEach((gateway) => {
-            let gatewayAndHash = gateway.replace(':hash', this.state.hash)
-            fetch(gatewayAndHash)
-                .then(res => res.text())
-                .then((text) => {
-                    if(found)
-                        return
 
-                    let matched = (text.indexOf(textToFind) !== -1) //This is not perfect. Just wants to be an extra check against 404 page
+        console.log(index)
+        let gateway = gateways[index]
+        let gatewayAndHash = gateway.replace(':hash', this.state.hash)
+        console.log("Checking: "+ gatewayAndHash)
+        fetch(gatewayAndHash)
+            .then(res => res.text())
+            .then((text) => {
+                console.log(this.state.textToFind, text.indexOf(this.state.textToFind) !== -1)
+                let matched = (text.trim().indexOf(this.state.textToFind.trim()) !== -1) //This is not perfect. Just wants to be an extra check against 404 page
+                console.log(matched)
+                if(matched)
+                {
                     this.setState({
-                        availableLink:gatewayAndHash
+                        availableLink:gatewayAndHash,
+                        found:true
                     })
-                   found = true
-
-                }).catch((err) => {
-                    this.addCensoredLink(gatewayAndHash)       
-                })
-        })
+                }
+                else
+                {
+                    this.iterate(index+1) 
+                }
+        
+            }).catch((err) => {
+                this.addCensoredLink(gatewayAndHash) 
+                this.iterate(index+1)      
+            })
     }
 
     getParams=(params)=>
@@ -109,7 +104,7 @@ class App extends Component {
         if(params.textToFind)
             newState.textToFind= params.textToFind
         else
-            newState.textToFind = "</script><title>Inici - Referèndum 2017</title>"
+            newState.textToFind = "Hello from IPFS Gateway Checker"
 
         if(params.unavailableText)
             newState.unavailableText= params.unavailableText
@@ -120,6 +115,12 @@ class App extends Component {
             newState.availableText= params.availableText
         else
             newState.availableText = "Available"
+
+        if(params.searchText)
+            newState.searchText= params.searchText
+        else
+            newState.searchText = "Checking..."
+
 
         return newState
 
@@ -169,6 +170,17 @@ class App extends Component {
                 />)    
     }
 
+    getStatus=()=>
+    {
+
+        if(this.state.found)
+            return (<Subheader inset={false}>{this.state.availableText}</Subheader>)
+        else if (this.state.runOut)
+            return (<Subheader inset={false}>{"Nothing found"}</Subheader>)
+        else
+            return(<Subheader inset={false}>{this.state.searchText}</Subheader>)
+    }
+
     getUnavailable=()=>
     {
         let div = <div/>
@@ -197,14 +209,11 @@ class App extends Component {
                 <div style = {{margin:25}}>
                     <h2> {this.state.titleText} </h2>
 
-                    <Subheader inset={false}>{this.state.availableText}</Subheader>
+                    {this.getStatus()}
                     
                     {availableLink}
 
-
                     {this.getUnavailable()}
-                    
-        
 
                 </div>
                 </MuiThemeProvider>
